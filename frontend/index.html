@@ -2,10 +2,96 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Transkriptor</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Transkriptor</h1>
-  <p>Frontend folgt in Schritt 9.</p>
+  <div class="container">
+    <header class="app-header">
+      <h1>Transkriptor</h1>
+      <div class="engine-toggle" id="engine-toggle">
+        <button data-engine="local">Lokal</button>
+        <button data-engine="groq">Groq</button>
+      </div>
+    </header>
+
+    <div class="panel">
+      <div class="panel-row">
+        <label>🌐 Sprache</label>
+        <select id="language-select"></select>
+      </div>
+      <div class="panel-row" id="model-row">
+        <label>⚙️ Modell</label>
+        <select id="model-select">
+          <option value="small.en">Schnell (small.en)</option>
+          <option value="medium" selected>Standard (medium)</option>
+          <option value="large-v3">Genau (large-v3)</option>
+        </select>
+      </div>
+      <div class="estimate" id="estimate-text">Geschätzte Verarbeitung der Warteschlange: 0 Min</div>
+      <div class="groq-warning" id="groq-warning" style="display:none">
+        Kein Groq API-Key gefunden. Bitte trage <code>GROQ_API_KEY</code> in der <code>.env</code>-Datei ein.
+        Einen kostenlosen Key erhältst du auf <a href="https://console.groq.com" target="_blank">console.groq.com</a>.
+      </div>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <div class="icon">⬆️</div>
+      <div><strong>Dateien hier hineinziehen</strong></div>
+      <div class="hint">mp3, mp4, wav, m4a, mov, webm · keine Größenbegrenzung</div>
+      <input type="file" id="file-input" multiple accept=".mp3,.mp4,.wav,.m4a,.mov,.webm" style="display:none" />
+    </div>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Warteschlange</h2>
+        <div>
+          <button class="btn primary" id="start-all">Alle starten</button>
+          <button class="btn" id="clear-queue">Liste leeren</button>
+        </div>
+      </div>
+      <div class="action-bar" id="queue-action-bar" style="display:none">
+        <input type="checkbox" id="queue-select-all" />
+        <span id="queue-selected-count">0 ausgewählt</span>
+        <div class="spacer"></div>
+        <button class="btn small" data-fmt="txt" data-target="queue">.txt</button>
+        <button class="btn small" data-fmt="srt" data-target="queue">.srt</button>
+        <button class="btn small" data-fmt="both" data-target="queue">Beides</button>
+      </div>
+      <div id="queue-list"></div>
+      <div class="empty-hint" id="queue-empty">Noch keine Dateien in der Warteschlange.</div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Verlauf</h2>
+        <select id="history-period">
+          <option value="alle">Alle</option>
+          <option value="woche">Diese Woche</option>
+          <option value="monat">Dieser Monat</option>
+          <option value="3monate">Letzte 3 Monate</option>
+        </select>
+      </div>
+      <div class="search-row">
+        <input type="search" id="history-search" placeholder="Im Verlauf suchen (Dateiname)" />
+      </div>
+      <div class="action-bar" id="history-action-bar" style="display:none">
+        <input type="checkbox" id="history-select-all" />
+        <span id="history-selected-count">0 ausgewählt</span>
+        <div class="spacer"></div>
+        <button class="btn small" data-fmt="txt" data-target="history">.txt als ZIP</button>
+        <button class="btn small" data-fmt="srt" data-target="history">.srt als ZIP</button>
+        <button class="btn small" data-fmt="both" data-target="history">Beides als ZIP</button>
+      </div>
+      <div id="history-list"></div>
+      <div class="empty-hint" id="history-empty" style="display:none">Noch keine Einträge im Verlauf.</div>
+      <div style="text-align:center; margin-top:12px">
+        <button class="btn" id="load-more" style="display:none">Weitere 50 laden</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
