@@ -73,13 +73,14 @@ async function loadLanguages() {
 
 function updateModelRowVisibility() {
   el("model-row").style.display = state.engine === "local" ? "flex" : "none";
-  el("groq-warning").style.display = state.engine === "groq" ? "block" : "none";
+  el("groq-warning").style.display = state.engine === "groq" && !state.groqKeyPresent ? "block" : "none";
 }
 
 async function loadEngine() {
   const res = await fetch("/api/engine");
   const data = await res.json();
   state.engine = data.engine;
+  state.groqKeyPresent = data.groq_key_present;
   renderEngineToggle();
   updateModelRowVisibility();
 }
@@ -243,6 +244,7 @@ function renderQueueItem(item) {
 
 const ERROR_EXPLANATIONS = {
   groq_key_missing: "Groq API-Key fehlt. Bitte in der .env-Datei eintragen (siehe console.groq.com).",
+  groq_rate_limit: "Groq API-Limit erreicht (20 Anfragen/Min, 2000/Tag oder Audio-Sekunden-Limit). Bitte später erneut versuchen oder auf die lokale Engine wechseln.",
 };
 
 function renderErrorDetails(item) {

@@ -15,7 +15,7 @@ from dataclasses import asdict, dataclass, field
 
 import ffmpeg
 
-from transcriber.groq_engine import GroqAPIEngine, GroqAPIKeyMissingError
+from transcriber.groq_engine import GroqAPIEngine, GroqAPIKeyMissingError, GroqRateLimitError
 from transcriber.local_whisper import LocalWhisperEngine
 from transcriber.utils import extract_audio
 
@@ -211,6 +211,10 @@ def _process_item(item: QueueItem) -> None:
     except GroqAPIKeyMissingError as exc:
         item.status = "error"
         item.error_code = "groq_key_missing"
+        item.error = str(exc)
+    except GroqRateLimitError as exc:
+        item.status = "error"
+        item.error_code = "groq_rate_limit"
         item.error = str(exc)
     except Exception as exc:  # noqa: BLE001 - wir wollen jeden Fehler im UI anzeigen
         item.status = "error"

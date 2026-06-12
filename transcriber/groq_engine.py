@@ -3,7 +3,7 @@
 import os
 
 from dotenv import load_dotenv
-from groq import Groq
+from groq import Groq, RateLimitError
 
 from .base import BaseEngine, TranscriptResult, TranscriptSegment
 from .utils import split_audio_into_chunks
@@ -13,6 +13,15 @@ GROQ_MODEL = "whisper-large-v3-turbo"
 
 class GroqAPIKeyMissingError(Exception):
     """Wird ausgeloest, wenn kein GROQ_API_KEY konfiguriert ist."""
+
+
+class GroqRateLimitError(Exception):
+    """Wird ausgeloest, wenn die Groq-API ein Rate-Limit zurueckmeldet (HTTP 429).
+
+    Die Free-Tier-Limits fuer whisper-large-v3-turbo sind aktuell:
+    20 Requests/Min, 2000 Requests/Tag, 7200 Audio-Sekunden/Stunde,
+    28800 Audio-Sekunden/Tag.
+    """
 
 
 class GroqAPIEngine(BaseEngine):
@@ -41,12 +50,19 @@ class GroqAPIEngine(BaseEngine):
 
         for chunk_path, offset_seconds in chunks:
             with open(chunk_path, "rb") as audio_file:
-                response = self._client.audio.transcriptions.create(
-                    file=audio_file,
-                    model=GROQ_MODEL,
-                    language=language,
-                    response_format="verbose_json",
-                )
+                try:
+                    response = self._client.audio.transcriptions.create(
+                        file=audio_file,
+                        model=GROQ_MODEL,
+                        language=language,
+                        response_format="verbose_json",
+                    )
+                except RateLimitError as exc:
+                    raise GroqRateLimitError(
+                        "Groq API-Limit erreicht (z.B. 20 Anfragen/Minute, 2000/Tag oder "
+                        "Audio-Sekunden-Limit). Bitte spaeter erneut versuchen oder auf "
+                        "die lokale Engine wechseln."
+                    ) from exc
 
             detected_language = getattr(response, "language", detected_language) or detected_language
 

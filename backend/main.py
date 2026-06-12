@@ -9,12 +9,15 @@ import os
 import zipfile
 from io import BytesIO
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import db, queue_manager
 from .models import BulkDownloadRequest, EngineUpdate, TranscriptUpdate, segments_to_srt
+
+load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UPLOADS_DIR = os.path.join(BASE_DIR, "uploads")
@@ -44,7 +47,7 @@ def get_languages():
 
 @app.get("/api/engine")
 def get_engine():
-    return {"engine": queue_manager.get_current_engine()}
+    return {"engine": queue_manager.get_current_engine(), "groq_key_present": bool(os.environ.get("GROQ_API_KEY"))}
 
 
 @app.post("/api/engine")
