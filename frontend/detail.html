@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Transkriptor – Detail</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="detail.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="detail-header">
+      <a href="index.html" class="btn">← Zurück zur Übersicht</a>
+      <span class="badge-edit" id="edit-badge" style="display:none">✎ Bearbeiten-Modus</span>
+    </div>
+
+    <div class="title-row">
+      <div>
+        <h1 id="filename">...</h1>
+        <div class="meta" id="file-meta"></div>
+      </div>
+      <div class="actions" id="read-actions">
+        <button class="btn" id="edit-btn">✎ Bearbeiten</button>
+        <button class="btn" id="copy-btn">⧉ Kopieren</button>
+        <button class="btn" id="download-txt">↓ .txt</button>
+        <button class="btn" id="download-srt">↓ .srt</button>
+      </div>
+      <div class="actions" id="edit-actions" style="display:none">
+        <button class="btn primary" id="save-btn">✓ Speichern</button>
+        <button class="btn" id="discard-btn">✕ Verwerfen</button>
+      </div>
+    </div>
+
+    <audio id="audio-player" controls style="width:100%; margin: 16px 0"></audio>
+
+    <div id="segments"></div>
+  </div>
+
+  <script src="detail.js"></script>
+</body>
+</html>
