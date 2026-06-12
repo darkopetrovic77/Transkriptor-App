@@ -1,0 +1,22 @@
+# Python virtual environment
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Whisper-Modelle (werden automatisch heruntergeladen/gecached)
+models/
+
+# SQLite-Datenbank
+transkriptor.db
+
+# Hochgeladene Dateien und generierte Transkripte
+uploads/
+transcripts/
+
+# Umgebungs-Variablen (enthält API-Keys!)
+.env
+
+# IDE-Dateien
+.vscode/
+.idea/
