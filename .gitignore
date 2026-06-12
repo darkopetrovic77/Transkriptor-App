@@ -23,3 +23,6 @@ transcripts/
 
 # Lokale Testdateien (Audio/Video)
 testdateien/
+
+# Server-Logs
+*.log
