@@ -20,3 +20,6 @@ transcripts/
 # IDE-Dateien
 .vscode/
 .idea/
+
+# Lokale Testdateien (Audio/Video)
+testdateien/
