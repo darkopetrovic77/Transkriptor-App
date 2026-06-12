@@ -1,0 +1,8 @@
+[
+  {"code": "de", "name": "Deutsch"},
+  {"code": "de-ch", "name": "Schweizerdeutsch"},
+  {"code": "en", "name": "Englisch"},
+  {"code": "pt", "name": "Portugiesisch"},
+  {"code": "sr", "name": "Serbisch"},
+  {"code": "auto", "name": "Automatisch erkennen"}
+]
