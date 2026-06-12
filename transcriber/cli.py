@@ -7,6 +7,7 @@ Aufruf:
 import argparse
 import sys
 
+from .groq_engine import GroqAPIEngine
 from .local_whisper import DEFAULT_MODEL, LocalWhisperEngine
 
 
@@ -22,12 +23,16 @@ def main() -> None:
     transcribe_parser.add_argument("audio_path", help="Pfad zur Audiodatei")
     transcribe_parser.add_argument("--language", default=None, help="Sprachcode, z.B. de, en (Standard: Auto-Erkennung)")
     transcribe_parser.add_argument("--model", default=DEFAULT_MODEL, help=f"Whisper-Modell (Standard: {DEFAULT_MODEL})")
+    transcribe_parser.add_argument("--engine", default="local", choices=["local", "groq"], help="Engine: local oder groq (Standard: local)")
 
     args = parser.parse_args()
 
     if args.command == "transcribe":
-        engine = LocalWhisperEngine()
-        print(f"Transkribiere '{args.audio_path}' mit Modell '{args.model}' ...")
+        if args.engine == "groq":
+            engine = GroqAPIEngine()
+        else:
+            engine = LocalWhisperEngine()
+        print(f"Transkribiere '{args.audio_path}' mit Engine '{args.engine}' / Modell '{args.model}' ...")
         result = engine.transcribe(args.audio_path, language=args.language, model=args.model)
 
         print(f"\nErkannte Sprache: {result.language}")
