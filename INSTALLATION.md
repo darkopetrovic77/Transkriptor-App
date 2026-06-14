@@ -40,14 +40,20 @@ Danach Terminal neu öffnen und prüfen:
 ffmpeg -version
 ```
 
-## Schritt 3: Projekt kopieren
+## Schritt 3: Projekt herunterladen
 
-Den kompletten Projektordner `Transkriptor App` auf den neuen Rechner
-kopieren (z.B. per USB-Stick, Netzwerkfreigabe oder `git clone`, falls das
-Projekt in einem Git-Repository liegt).
+Das Projekt liegt auf GitHub (privates Repository). Im gewünschten
+Zielordner ein Terminal öffnen und klonen:
 
-**Wichtig:** Folgende Ordner/Dateien müssen NICHT mitkopiert werden (sie
-werden automatisch neu erstellt bzw. enthalten lokale/geheime Daten):
+```powershell
+git clone https://github.com/darkopetrovic77/Transkriptor-App.git
+cd Transkriptor-App
+```
+
+Bei der Anmeldung öffnet sich ein Browser-Fenster für den GitHub-Login.
+
+**Hinweis:** Folgende Ordner/Dateien sind absichtlich nicht im Repository
+(sie werden automatisch neu erstellt bzw. enthalten lokale/geheime Daten):
 
 - `.venv/`
 - `models/`
