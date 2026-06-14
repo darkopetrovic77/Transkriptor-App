@@ -128,24 +128,94 @@ function setupDropzone() {
   });
 }
 
-async function uploadFiles(fileList, confirmed = false) {
-  const language = el("language-select").value;
-  const model = el("model-select").value;
-
-  for (const file of fileList) {
+function uploadOneFile(file, language, model, confirmed, onProgress) {
+  return new Promise((resolve, reject) => {
     const formData = new FormData();
     formData.append("files", file);
     formData.append("language", language);
     formData.append("model", model);
     formData.append("confirmed", confirmed ? "true" : "false");
 
-    const res = await fetch("/api/upload", { method: "POST", body: formData });
-    const results = await res.json();
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/upload");
+
+    xhr.upload.addEventListener("progress", (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        onProgress(percent);
+      }
+    });
+
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(JSON.parse(xhr.responseText));
+      } else {
+        reject(new Error(`Upload fehlgeschlagen (${xhr.status})`));
+      }
+    });
+    xhr.addEventListener("error", () => reject(new Error("Upload fehlgeschlagen")));
+
+    xhr.send(formData);
+  });
+}
+
+function createUploadProgressItem(filename) {
+  const list = el("upload-progress-list");
+
+  const item = document.createElement("div");
+  item.className = "upload-progress-item";
+
+  const label = document.createElement("div");
+  label.className = "upload-progress-label";
+  label.textContent = `${filename}: 0%`;
+
+  const bar = document.createElement("div");
+  bar.className = "upload-progress-bar";
+  const fill = document.createElement("div");
+  fill.className = "upload-progress-fill";
+  bar.appendChild(fill);
+
+  item.append(label, bar);
+  list.appendChild(item);
+
+  return {
+    setProgress(percent) {
+      label.textContent = `${filename}: ${percent}%`;
+      fill.style.width = `${percent}%`;
+    },
+    setDone() {
+      item.classList.add("done");
+      label.textContent = `${filename}: fertig`;
+      fill.style.width = "100%";
+    },
+    remove() {
+      item.remove();
+    },
+  };
+}
+
+async function uploadFiles(fileList, confirmed = false) {
+  const language = el("language-select").value;
+  const model = el("model-select").value;
+
+  for (const file of fileList) {
+    const progress = createUploadProgressItem(file.name);
+    let results;
+    try {
+      results = await uploadOneFile(file, language, model, confirmed, (percent) => progress.setProgress(percent));
+      progress.setDone();
+    } catch (e) {
+      progress.remove();
+      alert(`${file.name}: ${e.message}`);
+      continue;
+    }
+
+    setTimeout(() => progress.remove(), 1000);
 
     for (const result of results) {
       if (result.error) {
         alert(`${result.filename}: ${result.error}`);
-      } else if (result.warning === "lange_aufnahme") {
+      } else if (result.warning === "groq_limit") {
         const ok = confirm(`${result.message}\n\nDatei "${result.filename}" trotzdem verarbeiten?`);
         if (ok) await uploadFiles([file], true);
       }
@@ -232,6 +302,19 @@ function renderQueueItem(item) {
     });
   }
   row.appendChild(tag);
+
+  if (item.status === "queued" || item.status === "done") {
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "remove-item-btn";
+    removeBtn.textContent = "✕";
+    removeBtn.title = "Aus der Warteschlange entfernen";
+    removeBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      await fetch(`/api/queue/${item.id}`, { method: "DELETE" });
+      refreshQueue();
+    });
+    row.appendChild(removeBtn);
+  }
 
   if (item.status === "done") {
     row.addEventListener("click", () => {

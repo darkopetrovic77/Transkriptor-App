@@ -142,6 +142,48 @@ select {
   margin-top: 4px;
 }
 
+.upload-progress-list {
+  margin: -12px 0 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.upload-progress-item {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+
+.upload-progress-label {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-progress-bar {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.upload-progress-fill {
+  background: var(--accent);
+  height: 100%;
+  width: 0%;
+  transition: width 0.15s;
+}
+
+.upload-progress-item.done .upload-progress-fill {
+  background: #2f855a;
+}
+
 section.section {
   margin-bottom: 32px;
 }
@@ -248,6 +290,22 @@ section.section {
 .arrow {
   color: var(--muted);
   font-size: 1.1rem;
+}
+
+.remove-item-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.remove-item-btn:hover {
+  background: var(--error-bg);
+  color: var(--error);
 }
 
 .search-row {

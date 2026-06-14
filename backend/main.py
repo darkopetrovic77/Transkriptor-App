@@ -25,7 +25,7 @@ LANGUAGES_PATH = os.path.join(BASE_DIR, "languages.json")
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
 ALLOWED_EXTENSIONS = {".mp3", ".mp4", ".wav", ".m4a", ".mov", ".webm"}
-LONG_FILE_THRESHOLD_SECONDS = 30 * 60
+GROQ_AUDIO_SECONDS_PER_HOUR_LIMIT = 7200  # Free-Tier-Limit pro Stunde
 
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 
@@ -82,13 +82,22 @@ async def upload_files(
 
         duration = queue_manager.get_audio_duration(dest_path)
 
-        if duration > LONG_FILE_THRESHOLD_SECONDS and not confirmed:
+        if (
+            queue_manager.get_current_engine() == "groq"
+            and duration > GROQ_AUDIO_SECONDS_PER_HOUR_LIMIT
+            and not confirmed
+        ):
             os.remove(dest_path)
             results.append({
                 "filename": upload.filename,
-                "warning": "lange_aufnahme",
+                "warning": "groq_limit",
                 "duration": duration,
-                "message": f"Diese Aufnahme ist {duration / 60:.0f} Minuten lang. Bitte bestaetigen, um sie trotzdem zu verarbeiten.",
+                "message": (
+                    f"Diese Aufnahme ist {duration / 60:.0f} Minuten lang und ueberschreitet "
+                    f"das Groq-Limit von {GROQ_AUDIO_SECONDS_PER_HOUR_LIMIT // 60} Audio-Minuten/Stunde. "
+                    "Die Transkription wird wahrscheinlich mit einem Rate-Limit-Fehler abbrechen. "
+                    "Empfehlung: lokale Engine verwenden. Trotzdem mit Groq versuchen?"
+                ),
             })
             continue
 
