@@ -76,11 +76,20 @@ async def upload_files(
             continue
 
         dest_path = os.path.join(UPLOADS_DIR, f"{os.urandom(8).hex()}_{upload.filename}")
-        content = await upload.read()
-        with open(dest_path, "wb") as f:
-            f.write(content)
+        try:
+            content = await upload.read()
+            with open(dest_path, "wb") as f:
+                f.write(content)
+        except Exception as exc:
+            results.append({"filename": upload.filename, "error": f"Datei konnte nicht gespeichert werden: {exc}"})
+            continue
 
-        duration = queue_manager.get_audio_duration(dest_path)
+        try:
+            duration = queue_manager.get_audio_duration(dest_path)
+        except Exception as exc:
+            os.remove(dest_path)
+            results.append({"filename": upload.filename, "error": f"Datei konnte nicht gelesen werden (ffmpeg): {exc}"})
+            continue
 
         if (
             queue_manager.get_current_engine() == "groq"
@@ -101,7 +110,12 @@ async def upload_files(
             })
             continue
 
-        item = queue_manager.add_to_queue(dest_path, upload.filename, language, model)
+        try:
+            item = queue_manager.add_to_queue(dest_path, upload.filename, language, model)
+        except Exception as exc:
+            os.remove(dest_path)
+            results.append({"filename": upload.filename, "error": f"Fehler beim Hinzufügen zur Warteschlange: {exc}"})
+            continue
         results.append(item.to_dict())
 
     return results
