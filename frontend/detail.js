@@ -63,7 +63,15 @@ async function render() {
   if (size) parts.splice(2, 0, size);
   el("file-meta").textContent = parts.join(" · ");
 
-  el("audio-player").src = `/api/transcripts/${transcriptId}/audio`;
+  const audioRes = await fetch(`/api/transcripts/${transcriptId}/audio`, { method: "HEAD" }).catch(() => null);
+  const audioPlayer = el("audio-player");
+  if (audioRes && audioRes.ok) {
+    audioPlayer.src = `/api/transcripts/${transcriptId}/audio`;
+    audioPlayer.style.display = "";
+  } else {
+    audioPlayer.style.display = "none";
+    audioPlayer.insertAdjacentHTML("afterend", "<p style=\"color:var(--muted);font-size:0.9rem\">Audio nicht mehr verfügbar (Originaldatei wurde nach Transkription gelöscht).</p>");
+  }
 
   renderSegments();
 }

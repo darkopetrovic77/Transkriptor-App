@@ -281,6 +281,11 @@ section.section {
   color: #2f855a;
 }
 
+.status-tag.cancelled {
+  background: var(--panel);
+  color: var(--muted);
+}
+
 .status-tag.error {
   background: var(--error-bg);
   color: var(--error);

@@ -292,7 +292,7 @@ function renderQueueItem(item) {
 
   const tag = document.createElement("span");
   tag.className = `status-tag ${item.status}`;
-  const labels = { queued: "Warteschlange", running: "Läuft", done: "Fertig", error: "Fehler – Klick für Details" };
+  const labels = { queued: "Warteschlange", running: "Läuft", done: "Fertig", error: "Fehler – Klick für Details", cancelled: "Abgebrochen" };
   tag.textContent = labels[item.status] || item.status;
   if (item.status === "error") {
     tag.addEventListener("click", (e) => {
@@ -303,7 +303,20 @@ function renderQueueItem(item) {
   }
   row.appendChild(tag);
 
-  if (item.status === "queued" || item.status === "done") {
+  if (item.status === "running") {
+    const stopBtn = document.createElement("button");
+    stopBtn.className = "remove-item-btn";
+    stopBtn.textContent = "⏹";
+    stopBtn.title = "Transkription abbrechen";
+    stopBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      await fetch(`/api/queue/${item.id}/cancel`, { method: "POST" });
+      refreshQueue();
+    });
+    row.appendChild(stopBtn);
+  }
+
+  if (item.status === "queued" || item.status === "done" || item.status === "cancelled") {
     const removeBtn = document.createElement("button");
     removeBtn.className = "remove-item-btn";
     removeBtn.textContent = "✕";

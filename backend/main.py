@@ -24,7 +24,7 @@ UPLOADS_DIR = os.path.join(BASE_DIR, "uploads")
 LANGUAGES_PATH = os.path.join(BASE_DIR, "languages.json")
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
-ALLOWED_EXTENSIONS = {".mp3", ".mp4", ".wav", ".m4a", ".mov", ".webm"}
+ALLOWED_EXTENSIONS = {".mp3", ".mp4", ".wav", ".m4a", ".mov", ".webm", ".ts"}
 GROQ_AUDIO_SECONDS_PER_HOUR_LIMIT = 7200  # Free-Tier-Limit pro Stunde
 
 os.makedirs(UPLOADS_DIR, exist_ok=True)
@@ -145,6 +145,13 @@ def remove_queue_item(item_id: str):
     return {"status": "entfernt"}
 
 
+@app.post("/api/queue/{item_id}/cancel")
+def cancel_queue_item(item_id: str):
+    if not queue_manager.cancel_item(item_id):
+        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden")
+    return {"status": "abgebrochen"}
+
+
 @app.post("/api/queue/{item_id}/retry")
 def retry_queue_item(item_id: str):
     if not queue_manager.retry_item(item_id):
@@ -199,8 +206,8 @@ def get_transcript_audio(transcript_id: int):
     row = db.get_transcript(transcript_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Transkript nicht gefunden")
-    if not os.path.exists(row["pfad_audio"]):
-        raise HTTPException(status_code=404, detail="Audiodatei nicht gefunden")
+    if not row["pfad_audio"] or not os.path.exists(row["pfad_audio"]):
+        raise HTTPException(status_code=404, detail="Audiodatei nicht verfügbar")
     return FileResponse(row["pfad_audio"])
 
 

@@ -32,6 +32,21 @@ def extract_audio(video_path: str) -> str:
     return output_path
 
 
+def convert_to_mp3(source_path: str, dest_path: str, bitrate: str = "128k") -> None:
+    """Konvertiert eine Audio-/Videodatei in eine komprimierte MP3.
+
+    Wird nach erfolgreicher Transkription aufgerufen, um die grosse
+    Originaldatei durch eine kleine MP3 fuer den Audio-Player zu ersetzen.
+    """
+    (
+        ffmpeg
+        .input(source_path)
+        .output(dest_path, audio_bitrate=bitrate, ac=1, vn=None, acodec="libmp3lame")
+        .overwrite_output()
+        .run(quiet=True)
+    )
+
+
 def split_audio_into_chunks(audio_path: str, max_size_bytes: int = MAX_GROQ_FILE_SIZE) -> list[tuple[str, float]]:
     """Teilt eine Audiodatei in mehrere Teile auf, falls sie zu gross ist.
 

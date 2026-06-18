@@ -17,7 +17,7 @@ import ffmpeg
 
 from transcriber.groq_engine import GroqAPIEngine, GroqAPIKeyMissingError, GroqRateLimitError
 from transcriber.local_whisper import LocalWhisperEngine
-from transcriber.utils import extract_audio
+from transcriber.utils import convert_to_mp3, extract_audio
 
 from . import db
 from .models import default_model_for_language, estimate_seconds, segments_to_srt
@@ -25,7 +25,7 @@ from .models import default_model_for_language, estimate_seconds, segments_to_sr
 TRANSCRIPTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "transcripts")
 os.makedirs(TRANSCRIPTS_DIR, exist_ok=True)
 
-VIDEO_EXTENSIONS = {".mp4", ".mov", ".webm"}
+VIDEO_EXTENSIONS = {".mp4", ".mov", ".webm", ".ts"}
 
 
 @dataclass
@@ -37,12 +37,13 @@ class QueueItem:
     model: str
     duration: float
     size_bytes: int
-    status: str = "queued"  # queued, running, done, error
+    status: str = "queued"  # queued, running, done, error, cancelled
     error: str | None = None
     error_code: str | None = None
     engine: str | None = None  # wird beim Start fixiert
     transcript_id: int | None = None
     selected: bool = False
+    cancel_requested: bool = False
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -180,16 +181,26 @@ def _process_item(item: QueueItem) -> None:
         result = engine.transcribe(audio_path, language=_resolve_language(item.language), model=item.model)
         processing_time = time.time() - start_time
 
+        if item.cancel_requested:
+            item.status = "cancelled"
+            return
+
         segments = [{"start": s.start, "end": s.end, "text": s.text} for s in result.segments]
 
         base_name = os.path.splitext(item.filename)[0]
         txt_path = os.path.join(TRANSCRIPTS_DIR, f"{item.id}_{base_name}.txt")
         srt_path = os.path.join(TRANSCRIPTS_DIR, f"{item.id}_{base_name}.srt")
+        mp3_path = os.path.join(TRANSCRIPTS_DIR, f"{item.id}_{base_name}.mp3")
 
         with open(txt_path, "w", encoding="utf-8") as f:
             f.write(result.text)
         with open(srt_path, "w", encoding="utf-8") as f:
             f.write(segments_to_srt(segments))
+
+        # Original durch kleine MP3 ersetzen (spart Gigabytes in uploads/)
+        convert_to_mp3(audio_path, mp3_path)
+        if os.path.exists(item.filepath):
+            os.remove(item.filepath)
 
         transcript_id = db.insert_transcript(
             dateiname=item.filename,
@@ -197,7 +208,7 @@ def _process_item(item: QueueItem) -> None:
             sprache=result.language or item.language,
             modell=item.model,
             engine=item.engine,
-            pfad_audio=item.filepath,
+            pfad_audio=mp3_path,
             pfad_txt=txt_path,
             pfad_srt=srt_path,
             text=result.text,
@@ -231,6 +242,17 @@ def _resolve_language(language: str) -> str | None:
     if language == "de-ch":
         return "de"
     return language
+
+
+def cancel_item(item_id: str) -> bool:
+    item = get_item(item_id)
+    if item is None:
+        return False
+    if item.status == "queued":
+        item.status = "cancelled"
+    elif item.status == "running":
+        item.cancel_requested = True  # Worker verwirft das Ergebnis nach Abschluss
+    return True
 
 
 def retry_item(item_id: str) -> bool:
